@@ -32,23 +32,12 @@ public class OkaeriInjector implements Injector {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<? extends Injectable<T>> getInjectable(String name, Class<T> type) {
-
-        Injectable<T> valueByNameAndType = this.injectables.stream()
-                .filter(injectable -> name.equals(injectable.getName()))
+        Injectable<T> value = this.injectables.stream()
+                .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
                 .findAny()
                 .orElse(null);
-
-        if (valueByNameAndType != null) {
-            return Optional.of(valueByNameAndType);
-        }
-
-        Injectable<T> valueByType = this.injectables.stream()
-                .filter(injectable -> type.isAssignableFrom(injectable.getType()))
-                .findAny()
-                .orElse(null);
-
-        return Optional.ofNullable(valueByType);
+        return (value == null) ? this.getInjectable("", type) : Optional.of(value);
     }
 
     @Override
