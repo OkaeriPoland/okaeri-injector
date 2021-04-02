@@ -37,7 +37,10 @@ public class OkaeriInjector implements Injector {
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
                 .findAny()
                 .orElse(null);
-        return (value == null) ? this.getInjectable("", type) : Optional.of(value);
+        return ((value == null) && !"".equals(name)) // if value is not found and name is not ""
+                ? this.getInjectable("", type) // search for injectable ignoring name
+                : ((value == null) ? Optional.empty() // when still not found, return empty
+                : Optional.of(value)); // or else return value
     }
 
     @Override
