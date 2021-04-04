@@ -4,7 +4,7 @@ import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.injector.annotation.PostConstruct;
 import eu.okaeri.injector.exception.InjectorException;
 import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,11 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class OkaeriInjector implements Injector {
 
+    private final boolean unsafe;
+
     public static OkaeriInjector create() {
-        return new OkaeriInjector();
+        return create(false);
+    }
+
+    public static OkaeriInjector create(boolean unsafe) {
+        return new OkaeriInjector(unsafe);
     }
 
     private List<Injectable> injectables = new ArrayList<>();
@@ -44,14 +50,22 @@ public class OkaeriInjector implements Injector {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T createInstance(Class<T> clazz) throws InjectorException {
 
         // create instance
         T instance;
         try {
             instance = clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException exception) {
-            throw new InjectorException("cannot initialize new instance of " + clazz, exception);
+        } catch (InstantiationException | IllegalAccessException exception0) {
+            if (!this.unsafe) {
+                throw new InjectorException("cannot initialize new instance of " + clazz, exception0);
+            }
+            try {
+                instance = (T) allocateInstance(clazz);
+            } catch (Exception exception) {
+                throw new InjectorException("cannot (unsafe) initialize new instance of " + clazz, exception);
+            }
         }
 
         // inject fields
@@ -67,17 +81,15 @@ public class OkaeriInjector implements Injector {
             }
             Optional<? extends Injectable<?>> injectableOptional = this.getInjectable(name, field.getType());
             if (!injectableOptional.isPresent()) {
-                throw new InjectorException("cannot resolve " + inject + " " + field.getType() + " [" + field.getName() + "] in instace of " + clazz);
+                throw new InjectorException("cannot resolve " + inject + " " + field.getType() + " [" + field.getName() + "] in instance of " + clazz);
             }
             Injectable<?> injectable = injectableOptional.get();
-            boolean accessible = field.isAccessible();
             field.setAccessible(true);
             try {
                 field.set(instance, injectable.getObject());
             } catch (IllegalAccessException exception) {
-                throw new InjectorException("cannot inject " + injectable + " to instace of " + clazz, exception);
+                throw new InjectorException("cannot inject " + injectable + " to instance of " + clazz, exception);
             }
-            field.setAccessible(accessible);
         }
 
         // dispatch post constructs
@@ -91,10 +103,19 @@ public class OkaeriInjector implements Injector {
                 method.setAccessible(true);
                 method.invoke(instance);
             } catch (IllegalAccessException | InvocationTargetException exception) {
-                throw new InjectorException("failed to invoke @PostConstruct for instace of " + clazz, exception);
+                throw new InjectorException("failed to invoke @PostConstruct for instance of " + clazz, exception);
             }
         }
 
         return instance;
+    }
+
+    private static Object allocateInstance(Class<?> clazz) throws Exception {
+        Class<?> unsafeClazz = Class.forName("sun.misc.Unsafe");
+        Field theUnsafeField = unsafeClazz.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object unsafeInstance = theUnsafeField.get(null);
+        Method allocateInstance = unsafeClazz.getDeclaredMethod("allocateInstance", Class.class);
+        return allocateInstance.invoke(unsafeInstance, clazz);
     }
 }
