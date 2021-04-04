@@ -17,7 +17,7 @@ public interface Injector {
 
     @SuppressWarnings("unchecked")
     default <T> Injector registerInjectable(String name, T object) throws InjectorException {
-        if (object == null) throw new InjectorException("cannot register null object");
+        if (object == null) throw new InjectorException("cannot register null object: " + name);
         Class<T> objectClazz = (Class<T>) object.getClass();
         return this.registerInjectable(name, object, objectClazz);
     }
