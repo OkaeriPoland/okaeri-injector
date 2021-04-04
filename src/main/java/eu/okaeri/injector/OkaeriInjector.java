@@ -30,7 +30,7 @@ public class OkaeriInjector implements Injector {
 
     @Override
     public <T> Injector registerInjectable(String name, T object, Class<T> type) throws InjectorException {
-        if (object == null) throw new InjectorException("cannot register null object");
+        if (object == null) throw new InjectorException("cannot register null object: " + name);
         this.injectables.add(Injectable.of(name, object, type));
         return this;
     }
