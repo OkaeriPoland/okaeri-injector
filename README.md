@@ -6,7 +6,7 @@
 ![Contributors](https://img.shields.io/github/contributors/OkaeriPoland/okaeri-injector)
 [![Discord](https://img.shields.io/discord/589089838200913930)](https://discord.gg/hASN5eX)
 
-Probably the most basic and simplest DI possible with just ~9kB in size.
+Probably the most basic and simplest DI possible with just ~9kB in size. Part of the [okaeri-platform](https://github.com/OkaeriPoland/okaeri-platform).
 
 ## Installation
 ### Maven
