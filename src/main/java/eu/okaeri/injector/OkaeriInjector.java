@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class OkaeriInjector implements Injector {
@@ -29,6 +30,18 @@ public class OkaeriInjector implements Injector {
     private List<Injectable> injectables = new ArrayList<>();
 
     @Override
+    public List<Injectable> all() {
+        return this.injectables;
+    }
+
+    @Override
+    public List<Injectable> allOf(Class<?> type) {
+        return this.injectables.stream()
+                .filter(injectable -> type.isAssignableFrom(injectable.getType()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public <T> Injector registerInjectable(String name, T object, Class<T> type) throws InjectorException {
         if (object == null) throw new InjectorException("cannot register null object: " + name);
         this.injectables.add(Injectable.of(name, object, type));
@@ -37,21 +50,12 @@ public class OkaeriInjector implements Injector {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<? extends Injectable<T>> getInjectable(String name, Class<T> type) {
-
+    public <T> Optional<? extends Injectable<T>> getExact(String name, Class<T> type) {
         Injectable<T> value = this.injectables.stream()
                 .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
                 .findAny()
                 .orElse(null);
-
-        // no value and not searching for type only
-        if ((value == null) && !"".equals(name)) {
-            // search for type only
-            return this.getInjectable("", type);
-        }
-
-        // just return
         return Optional.ofNullable(value);
     }
 
@@ -77,20 +81,29 @@ public class OkaeriInjector implements Injector {
         // inject fields
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
+
             Inject inject = field.getAnnotation(Inject.class);
             if (inject == null) {
                 continue;
             }
+
             String name = inject.value();
+            Optional<? extends Injectable<?>> injectableOptional;
+
             if (name.isEmpty()) {
                 name = field.getName();
+                injectableOptional = this.getInjectable(name, field.getType());
+            } else {
+                injectableOptional = this.getExact(name, field.getType());
             }
-            Optional<? extends Injectable<?>> injectableOptional = this.getInjectable(name, field.getType());
+
             if (!injectableOptional.isPresent()) {
                 throw new InjectorException("cannot resolve " + inject + " " + field.getType() + " [" + field.getName() + "] in instance of " + clazz);
             }
+
             Injectable<?> injectable = injectableOptional.get();
             field.setAccessible(true);
+
             try {
                 field.set(instance, injectable.getObject());
             } catch (IllegalAccessException exception) {
