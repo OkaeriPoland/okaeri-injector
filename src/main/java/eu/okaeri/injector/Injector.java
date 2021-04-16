@@ -2,11 +2,16 @@ package eu.okaeri.injector;
 
 import eu.okaeri.injector.exception.InjectorException;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface Injector {
 
     <T> Injector registerInjectable(String name, T object, Class<T> type) throws InjectorException;
+
+    List<Injectable> all();
+
+    List<Injectable> allOf(Class<?> type);
 
     @SuppressWarnings("unchecked")
     default <T> Injector registerInjectable(T object) throws InjectorException {
@@ -22,7 +27,22 @@ public interface Injector {
         return this.registerInjectable(name, object, objectClazz);
     }
 
-    <T> Optional<? extends Injectable<T>> getInjectable(String name, Class<T> type);
+    @SuppressWarnings("unchecked")
+    default <T> Optional<? extends Injectable<T>> getInjectable(String name, Class<T> type) {
+
+        Injectable<T> value = this.getExact(name, type).orElse(null);
+
+        // no value and not searching for type only
+        if ((value == null) && !"".equals(name)) {
+            // search for type only
+            return this.getExact("", type);
+        }
+
+        // just return
+        return Optional.ofNullable(value);
+    }
+
+    <T> Optional<? extends Injectable<T>> getExact(String name, Class<T> type);
 
     <T> T createInstance(Class<T> clazz) throws InjectorException;
 }

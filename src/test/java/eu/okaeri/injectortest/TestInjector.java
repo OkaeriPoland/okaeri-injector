@@ -38,5 +38,19 @@ public final class TestInjector {
         Worker2 worker2 = injector.createInstance(Worker2.class);
         assertEquals(api2, worker2.getApi());
     }
+
+    @Test
+    public void test_double_type_injector_2() {
+
+        Api api = new Api("api-abc");
+        Api api2 = new Api("api");
+
+        Injector injector = OkaeriInjector.create()
+                .registerInjectable("api-abc", api)
+                .registerInjectable("api", api2);
+
+        Worker worker = injector.createInstance(Worker.class);
+        assertEquals(api2, worker.getApi());
+    }
 }
 
