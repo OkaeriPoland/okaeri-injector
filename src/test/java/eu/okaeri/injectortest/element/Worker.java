@@ -1,8 +1,10 @@
-package eu.okaeri.injectortest;
+package eu.okaeri.injectortest.element;
 
 import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.injector.annotation.PostConstruct;
+import lombok.Getter;
 
+@Getter
 public class Worker {
 
     @Inject
