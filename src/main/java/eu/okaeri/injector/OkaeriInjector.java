@@ -38,15 +38,21 @@ public class OkaeriInjector implements Injector {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Optional<? extends Injectable<T>> getInjectable(String name, Class<T> type) {
+
         Injectable<T> value = this.injectables.stream()
                 .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
                 .findAny()
                 .orElse(null);
-        return ((value == null) && !"".equals(name)) // if value is not found and name is not ""
-                ? this.getInjectable("", type) // search for injectable ignoring name
-                : ((value == null) ? Optional.empty() // when still not found, return empty
-                : Optional.of(value)); // or else return value
+
+        // no value and not searching for type only
+        if ((value == null) && !"".equals(name)) {
+            // search for type only
+            return this.getInjectable("", type);
+        }
+
+        // just return
+        return Optional.ofNullable(value);
     }
 
     @Override
