@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,10 +36,14 @@ public class OkaeriInjector implements Injector {
     }
 
     @Override
-    public List<Injectable> allOf(Class<?> type) {
-        return this.injectables.stream()
+    @SuppressWarnings("unchecked")
+    public <T> List<Injectable<T>> allOf(Class<T> type) {
+        List<Injectable<T>> data = new ArrayList<>();
+        List found = this.injectables.stream()
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
                 .collect(Collectors.toList());
+        data.addAll(found);
+        return Collections.unmodifiableList(data);
     }
 
     @Override

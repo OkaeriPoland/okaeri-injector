@@ -11,7 +11,7 @@ public interface Injector {
 
     List<Injectable> all();
 
-    List<Injectable> allOf(Class<?> type);
+    <T> List<Injectable<T>> allOf(Class<T> type);
 
     @SuppressWarnings("unchecked")
     default <T> Injector registerInjectable(T object) throws InjectorException {
