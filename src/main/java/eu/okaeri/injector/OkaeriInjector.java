@@ -6,13 +6,9 @@ import eu.okaeri.injector.exception.InjectorException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -32,7 +28,12 @@ public class OkaeriInjector implements Injector {
 
     @Override
     public List<Injectable> all() {
-        return this.injectables;
+        return Collections.unmodifiableList(this.injectables);
+    }
+
+    @Override
+    public void removeIf(Predicate<Injectable> filter) {
+        this.injectables.removeIf(filter);
     }
 
     @Override
@@ -69,19 +70,7 @@ public class OkaeriInjector implements Injector {
     public <T> T createInstance(Class<T> clazz) throws InjectorException {
 
         // create instance
-        T instance;
-        try {
-            instance = clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException exception0) {
-            if (!this.unsafe) {
-                throw new InjectorException("cannot initialize new instance of " + clazz, exception0);
-            }
-            try {
-                instance = (T) allocateInstance(clazz);
-            } catch (Exception exception) {
-                throw new InjectorException("cannot (unsafe) initialize new instance of " + clazz, exception);
-            }
-        }
+        T instance = tryCreateInstance(clazz, this.unsafe);
 
         // inject fields
         Field[] fields = clazz.getDeclaredFields();
@@ -117,21 +106,66 @@ public class OkaeriInjector implements Injector {
         }
 
         // dispatch post constructs
-        Method[] methods = clazz.getDeclaredMethods();
-        for (Method method : methods) {
-            PostConstruct postConstruct = method.getAnnotation(PostConstruct.class);
-            if (postConstruct == null) {
-                continue;
-            }
-            try {
-                method.setAccessible(true);
-                method.invoke(instance);
-            } catch (IllegalAccessException | InvocationTargetException exception) {
-                throw new InjectorException("failed to invoke @PostConstruct for instance of " + clazz, exception);
-            }
-        }
+        Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method -> method.getAnnotation(PostConstruct.class) != null)
+                .sorted(Comparator.comparingInt(method -> method.getAnnotation(PostConstruct.class).order()))
+                .forEach(method -> {
+                    try {
+                        Object result = this.invoke(instance, method);
+                        if (result != null) {
+                            this.registerInjectable(method.getName(), result);
+                        }
+                    } catch (InjectorException exception) {
+                        throw new InjectorException("failed to invoke @PostConstruct for instance of " + clazz, exception);
+                    }
+                });
 
         return instance;
+    }
+
+    public Object invoke(Constructor constructor) throws InjectorException {
+
+        constructor.setAccessible(true);
+        Object[] call = this.fillParameters(constructor.getParameters(), true);
+
+        try {
+            return constructor.newInstance(call);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException exception) {
+            throw new InjectorException("error invoking " + constructor, exception);
+        }
+    }
+
+    public Object invoke(Object object, Method method) throws InjectorException {
+
+        method.setAccessible(true);
+        Object[] call = this.fillParameters(method.getParameters(), true);
+
+        try {
+            return method.invoke(object, call);
+        } catch (Exception exception) {
+            throw new InjectorException("error invoking " + method, exception);
+        }
+    }
+
+    public Object[] fillParameters(Parameter[] parameters, boolean force) throws InjectorException {
+
+        Object[] call = new Object[parameters.length];
+
+        for (int i = 0; i < parameters.length; i++) {
+
+            Parameter param = parameters[i];
+            Class<?> paramType = param.getType();
+            String name = (param.getAnnotation(Inject.class) != null) ? param.getAnnotation(Inject.class).value() : "";
+
+            Optional<? extends Injectable<?>> injectable = this.getInjectable(name, paramType);
+            if (!injectable.isPresent() && force) {
+                throw new InjectorException("cannot fill parameters, no injectable of type " + paramType + " [" + name + "] found");
+            }
+
+            call[i] = paramType.cast(injectable.get().getObject());
+        }
+
+        return call;
     }
 
     private static Object allocateInstance(Class<?> clazz) throws Exception {
@@ -141,5 +175,23 @@ public class OkaeriInjector implements Injector {
         Object unsafeInstance = theUnsafeField.get(null);
         Method allocateInstance = unsafeClazz.getDeclaredMethod("allocateInstance", Class.class);
         return allocateInstance.invoke(unsafeInstance, clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T tryCreateInstance(Class<T> clazz, boolean unsafe) {
+        T instance;
+        try {
+            instance = clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException exception0) {
+            if (!unsafe) {
+                throw new InjectorException("cannot initialize new instance of " + clazz, exception0);
+            }
+            try {
+                instance = (T) allocateInstance(clazz);
+            } catch (Exception exception) {
+                throw new InjectorException("cannot (unsafe) initialize new instance of " + clazz, exception);
+            }
+        }
+        return instance;
     }
 }

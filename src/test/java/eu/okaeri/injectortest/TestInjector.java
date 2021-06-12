@@ -20,6 +20,7 @@ public final class TestInjector {
 
         Worker worker = injector.createInstance(Worker.class);
         assertEquals(api, worker.getApi());
+        assertEquals(3, worker.getCounter());
     }
 
     @Test
@@ -34,6 +35,7 @@ public final class TestInjector {
 
         Worker worker = injector.createInstance(Worker.class);
         assertEquals(api, worker.getApi());
+        assertEquals(3, worker.getCounter());
 
         Worker2 worker2 = injector.createInstance(Worker2.class);
         assertEquals(api2, worker2.getApi());
@@ -51,6 +53,7 @@ public final class TestInjector {
 
         Worker worker = injector.createInstance(Worker.class);
         assertEquals(api2, worker.getApi());
+        assertEquals(3, worker.getCounter());
     }
 }
 

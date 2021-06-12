@@ -4,12 +4,15 @@ import eu.okaeri.injector.exception.InjectorException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface Injector {
 
     <T> Injector registerInjectable(String name, T object, Class<T> type) throws InjectorException;
 
     List<Injectable> all();
+
+    void removeIf(Predicate<Injectable> predicate);
 
     <T> List<Injectable<T>> allOf(Class<T> type);
 
