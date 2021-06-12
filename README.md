@@ -37,6 +37,8 @@ implementation 'eu.okaeri:okaeri-injector:1.5.0'
 
 ## Example
 
+More complex example can be found in the [tests](https://github.com/OkaeriPoland/okaeri-injector/tree/master/src/test/java/eu/okaeri/injectortest).
+
 ```java
 public class Worker {
 
