@@ -1,6 +1,7 @@
 package eu.okaeri.injector;
 
 import eu.okaeri.injector.exception.InjectorException;
+import lombok.NonNull;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,21 +18,19 @@ public interface Injector {
     <T> List<Injectable<T>> allOf(Class<T> type);
 
     @SuppressWarnings("unchecked")
-    default <T> Injector registerInjectable(T object) throws InjectorException {
-        if (object == null) throw new InjectorException("cannot register null object");
+    default <T> Injector registerInjectable(@NonNull T object) throws InjectorException {
         Class<T> objectClazz = (Class<T>) object.getClass();
-        return this.registerInjectable(null, object, objectClazz);
+        return this.registerInjectable("", object, objectClazz);
     }
 
     @SuppressWarnings("unchecked")
-    default <T> Injector registerInjectable(String name, T object) throws InjectorException {
-        if (object == null) throw new InjectorException("cannot register null object: " + name);
+    default <T> Injector registerInjectable(@NonNull String name, @NonNull T object) throws InjectorException {
         Class<T> objectClazz = (Class<T>) object.getClass();
         return this.registerInjectable(name, object, objectClazz);
     }
 
     @SuppressWarnings("unchecked")
-    default <T> Optional<? extends Injectable<T>> getInjectable(String name, Class<T> type) {
+    default <T> Optional<? extends Injectable<T>> getInjectable(@NonNull String name, @NonNull Class<T> type) {
 
         Injectable<T> value = this.getExact(name, type).orElse(null);
 

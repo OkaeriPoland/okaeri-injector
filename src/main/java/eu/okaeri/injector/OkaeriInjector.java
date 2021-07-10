@@ -4,6 +4,7 @@ import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.injector.annotation.PostConstruct;
 import eu.okaeri.injector.exception.InjectorException;
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.*;
@@ -38,7 +39,7 @@ public class OkaeriInjector implements Injector {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> List<Injectable<T>> allOf(Class<T> type) {
+    public <T> List<Injectable<T>> allOf(@NonNull Class<T> type) {
         List<Injectable<T>> data = new ArrayList<>();
         List found = this.injectables.stream()
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
@@ -48,15 +49,14 @@ public class OkaeriInjector implements Injector {
     }
 
     @Override
-    public <T> Injector registerInjectable(String name, T object, Class<T> type) throws InjectorException {
-        if (object == null) throw new InjectorException("cannot register null object: " + name);
+    public <T> Injector registerInjectable(@NonNull String name, @NonNull T object, @NonNull Class<T> type) throws InjectorException {
         this.injectables.add(Injectable.of(name, object, type));
         return this;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<? extends Injectable<T>> getExact(String name, Class<T> type) {
+    public <T> Optional<? extends Injectable<T>> getExact(@NonNull String name, @NonNull Class<T> type) {
         Injectable<T> value = this.injectables.stream()
                 .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
@@ -67,7 +67,7 @@ public class OkaeriInjector implements Injector {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T createInstance(Class<T> clazz) throws InjectorException {
+    public <T> T createInstance(@NonNull Class<T> clazz) throws InjectorException {
 
         // create instance
         T instance = tryCreateInstance(clazz, this.unsafe);
@@ -123,7 +123,7 @@ public class OkaeriInjector implements Injector {
         return instance;
     }
 
-    public Object invoke(Constructor constructor) throws InjectorException {
+    public Object invoke(@NonNull Constructor constructor) throws InjectorException {
 
         constructor.setAccessible(true);
         Object[] call = this.fillParameters(constructor.getParameters(), true);
@@ -135,7 +135,7 @@ public class OkaeriInjector implements Injector {
         }
     }
 
-    public Object invoke(Object object, Method method) throws InjectorException {
+    public Object invoke(@NonNull Object object, @NonNull Method method) throws InjectorException {
 
         method.setAccessible(true);
         Object[] call = this.fillParameters(method.getParameters(), true);
@@ -147,7 +147,7 @@ public class OkaeriInjector implements Injector {
         }
     }
 
-    public Object[] fillParameters(Parameter[] parameters, boolean force) throws InjectorException {
+    public Object[] fillParameters(@NonNull Parameter[] parameters, boolean force) throws InjectorException {
 
         Object[] call = new Object[parameters.length];
 
@@ -168,7 +168,7 @@ public class OkaeriInjector implements Injector {
         return call;
     }
 
-    private static Object allocateInstance(Class<?> clazz) throws Exception {
+    private static Object allocateInstance(@NonNull Class<?> clazz) throws Exception {
         Class<?> unsafeClazz = Class.forName("sun.misc.Unsafe");
         Field theUnsafeField = unsafeClazz.getDeclaredField("theUnsafe");
         theUnsafeField.setAccessible(true);
@@ -178,7 +178,7 @@ public class OkaeriInjector implements Injector {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T tryCreateInstance(Class<T> clazz, boolean unsafe) {
+    private static <T> T tryCreateInstance(@NonNull Class<T> clazz, boolean unsafe) {
         T instance;
         try {
             instance = clazz.newInstance();
