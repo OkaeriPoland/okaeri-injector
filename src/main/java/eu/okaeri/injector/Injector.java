@@ -9,13 +9,13 @@ import java.util.function.Predicate;
 
 public interface Injector {
 
-    <T> Injector registerInjectable(String name, T object, Class<T> type) throws InjectorException;
+    <T> Injector registerInjectable(@NonNull String name, @NonNull T object, @NonNull Class<T> type) throws InjectorException;
 
     List<Injectable> all();
 
-    void removeIf(Predicate<Injectable> predicate);
+    void removeIf(@NonNull Predicate<Injectable> predicate);
 
-    <T> List<Injectable<T>> allOf(Class<T> type);
+    <T> List<Injectable<T>> allOf(@NonNull Class<T> type);
 
     @SuppressWarnings("unchecked")
     default <T> Injector registerInjectable(@NonNull T object) throws InjectorException {
@@ -27,6 +27,17 @@ public interface Injector {
     default <T> Injector registerInjectable(@NonNull String name, @NonNull T object) throws InjectorException {
         Class<T> objectClazz = (Class<T>) object.getClass();
         return this.registerInjectable(name, object, objectClazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    default <T> Injector registerExclusive(@NonNull String name, @NonNull T object) throws InjectorException {
+        Class<T> objectClazz = (Class<T>) object.getClass();
+        return this.registerExclusive(name, object, objectClazz);
+    }
+
+    default <T> Injector registerExclusive(@NonNull String name, @NonNull T object, @NonNull Class<T> type) throws InjectorException {
+        this.removeIf(injectable -> name.equals(injectable.getName()) && type.isAssignableFrom(injectable.getType()));
+        return this.registerInjectable(name, object, type);
     }
 
     @SuppressWarnings("unchecked")

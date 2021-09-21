@@ -33,7 +33,7 @@ public class OkaeriInjector implements Injector {
     }
 
     @Override
-    public void removeIf(Predicate<Injectable> filter) {
+    public void removeIf(@NonNull Predicate<Injectable> filter) {
         this.injectables.removeIf(filter);
     }
 
@@ -50,7 +50,7 @@ public class OkaeriInjector implements Injector {
 
     @Override
     public <T> Injector registerInjectable(@NonNull String name, @NonNull T object, @NonNull Class<T> type) throws InjectorException {
-        this.injectables.add(Injectable.of(name, object, type));
+        this.injectables.add(0, Injectable.of(name, object, type));
         return this;
     }
 
