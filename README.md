@@ -22,7 +22,7 @@ Add dependency to the `dependencies` section:
 <dependency>
   <groupId>eu.okaeri</groupId>
   <artifactId>okaeri-injector</artifactId>
-  <version>1.5.2</version>
+  <version>1.6.0</version>
 </dependency>
 ```
 ### Gradle
@@ -32,7 +32,7 @@ maven { url "https://storehouse.okaeri.eu/repository/maven-public/" }
 ```
 Add dependency to the `maven` section:
 ```groovy
-implementation 'eu.okaeri:okaeri-injector:1.5.2'
+implementation 'eu.okaeri:okaeri-injector:1.6.0'
 ```
 
 ## Example
