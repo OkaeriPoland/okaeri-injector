@@ -3,6 +3,9 @@ package eu.okaeri.injector;
 import eu.okaeri.injector.exception.InjectorException;
 import lombok.NonNull;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -58,4 +61,10 @@ public interface Injector {
     <T> Optional<? extends Injectable<T>> getExact(String name, Class<T> type);
 
     <T> T createInstance(Class<T> clazz) throws InjectorException;
+
+    Object invoke(@NonNull Constructor constructor) throws InjectorException;
+
+    Object invoke(@NonNull Object object, @NonNull Method method) throws InjectorException;
+
+    Object[] fillParameters(@NonNull Parameter[] parameters, boolean force) throws InjectorException;
 }

@@ -123,6 +123,7 @@ public class OkaeriInjector implements Injector {
         return instance;
     }
 
+    @Override
     public Object invoke(@NonNull Constructor constructor) throws InjectorException {
 
         constructor.setAccessible(true);
@@ -135,6 +136,7 @@ public class OkaeriInjector implements Injector {
         }
     }
 
+    @Override
     public Object invoke(@NonNull Object object, @NonNull Method method) throws InjectorException {
 
         method.setAccessible(true);
@@ -147,6 +149,7 @@ public class OkaeriInjector implements Injector {
         }
     }
 
+    @Override
     public Object[] fillParameters(@NonNull Parameter[] parameters, boolean force) throws InjectorException {
 
         Object[] call = new Object[parameters.length];
@@ -158,8 +161,12 @@ public class OkaeriInjector implements Injector {
             String name = (param.getAnnotation(Inject.class) != null) ? param.getAnnotation(Inject.class).value() : "";
 
             Optional<? extends Injectable<?>> injectable = this.getInjectable(name, paramType);
-            if (!injectable.isPresent() && force) {
-                throw new InjectorException("cannot fill parameters, no injectable of type " + paramType + " [" + name + "] found");
+            if (!injectable.isPresent()) {
+                if (force) {
+                    throw new InjectorException("cannot fill parameters, no injectable of type " + paramType + " [" + name + "] found");
+                } else {
+                    continue;
+                }
             }
 
             call[i] = paramType.cast(injectable.get().getObject());
