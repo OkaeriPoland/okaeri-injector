@@ -9,12 +9,14 @@ import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class OkaeriInjector implements Injector {
 
+    private final List<Injectable> injectables;
     private final boolean unsafe;
 
     public static OkaeriInjector create() {
@@ -22,10 +24,12 @@ public class OkaeriInjector implements Injector {
     }
 
     public static OkaeriInjector create(boolean unsafe) {
-        return new OkaeriInjector(unsafe);
+        return create(new CopyOnWriteArrayList<>(), unsafe);
     }
 
-    private List<Injectable> injectables = new ArrayList<>();
+    public static OkaeriInjector create(List<Injectable> injectables, boolean unsafe) {
+        return new OkaeriInjector(injectables, unsafe);
+    }
 
     @Override
     public List<Injectable> all() {
