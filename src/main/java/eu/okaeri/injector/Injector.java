@@ -58,9 +58,13 @@ public interface Injector {
         return Optional.ofNullable(value);
     }
 
-    <T> Optional<? extends Injectable<T>> getExact(String name, Class<T> type);
+    <T> Optional<? extends Injectable<T>> getExact(@NonNull String name, @NonNull Class<T> type);
 
-    <T> T createInstance(Class<T> clazz) throws InjectorException;
+    <T> T createInstance(@NonNull Class<T> clazz) throws InjectorException;
+
+    <T> T injectFields(@NonNull T instance) throws InjectorException;
+
+    <T> T invokePostConstructs(@NonNull T instance) throws InjectorException;
 
     Object invoke(@NonNull Constructor constructor) throws InjectorException;
 
