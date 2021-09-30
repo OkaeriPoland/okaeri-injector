@@ -73,11 +73,56 @@ public class OkaeriInjector implements Injector {
     @SuppressWarnings("unchecked")
     public <T> T createInstance(@NonNull Class<T> clazz) throws InjectorException {
 
-        // create instance
-        T instance = tryCreateInstance(clazz, this.unsafe);
+        // try constructor inject
+        List<Constructor<?>> injectableConstructors = Arrays.stream(clazz.getConstructors())
+                .filter(constructor -> constructor.getAnnotation(Inject.class) != null)
+                .collect(Collectors.toList());
+
+        T instance;
+        if (injectableConstructors.isEmpty()) {
+            // create instance using default constructor
+            instance = tryCreateInstance(clazz, this.unsafe);
+        } else if (injectableConstructors.size() == 1) {
+            // try invoking constructor
+            instance = (T) this.invoke(injectableConstructors.get(0));
+        } else {
+            throw new InjectorException("Type should not have multiple constructors annotated with @Inject: " + clazz);
+        }
 
         // inject fields
+        this.injectFields(instance);
+
+        // dispatch post constructs
+        this.invokePostConstructs(instance);
+
+        // ready to go!
+        return instance;
+    }
+
+    @Override
+    public <T> T invokePostConstructs(@NonNull T instance) throws InjectorException {
+        Arrays.stream(instance.getClass().getDeclaredMethods())
+                .filter(method -> method.getAnnotation(PostConstruct.class) != null)
+                .sorted(Comparator.comparingInt(method -> method.getAnnotation(PostConstruct.class).order()))
+                .forEach(method -> {
+                    try {
+                        Object result = this.invoke(instance, method);
+                        if (result != null) {
+                            this.registerInjectable(method.getName(), result);
+                        }
+                    } catch (InjectorException exception) {
+                        throw new InjectorException("Failed to invoke @PostConstruct for instance of " + instance.getClass(), exception);
+                    }
+                });
+        return instance;
+    }
+
+    @Override
+    public <T> T injectFields(@NonNull T instance) {
+
+        Class<?> clazz = instance.getClass();
         Field[] fields = clazz.getDeclaredFields();
+
         for (Field field : fields) {
 
             Inject inject = field.getAnnotation(Inject.class);
@@ -109,21 +154,6 @@ public class OkaeriInjector implements Injector {
             }
         }
 
-        // dispatch post constructs
-        Arrays.stream(clazz.getDeclaredMethods())
-                .filter(method -> method.getAnnotation(PostConstruct.class) != null)
-                .sorted(Comparator.comparingInt(method -> method.getAnnotation(PostConstruct.class).order()))
-                .forEach(method -> {
-                    try {
-                        Object result = this.invoke(instance, method);
-                        if (result != null) {
-                            this.registerInjectable(method.getName(), result);
-                        }
-                    } catch (InjectorException exception) {
-                        throw new InjectorException("failed to invoke @PostConstruct for instance of " + clazz, exception);
-                    }
-                });
-
         return instance;
     }
 
@@ -136,7 +166,7 @@ public class OkaeriInjector implements Injector {
         try {
             return constructor.newInstance(call);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException exception) {
-            throw new InjectorException("error invoking " + constructor, exception);
+            throw new InjectorException("Error invoking " + constructor, exception);
         }
     }
 
@@ -149,7 +179,7 @@ public class OkaeriInjector implements Injector {
         try {
             return method.invoke(object, call);
         } catch (Exception exception) {
-            throw new InjectorException("error invoking " + method, exception);
+            throw new InjectorException("Error invoking " + method, exception);
         }
     }
 
@@ -167,7 +197,7 @@ public class OkaeriInjector implements Injector {
             Optional<? extends Injectable<?>> injectable = this.getInjectable(name, paramType);
             if (!injectable.isPresent()) {
                 if (force) {
-                    throw new InjectorException("cannot fill parameters, no injectable of type " + paramType + " [" + name + "] found");
+                    throw new InjectorException("Cannot fill parameters, no injectable of type " + paramType + " [" + name + "] found");
                 } else {
                     continue;
                 }
@@ -195,12 +225,12 @@ public class OkaeriInjector implements Injector {
             instance = clazz.newInstance();
         } catch (InstantiationException | IllegalAccessException exception0) {
             if (!unsafe) {
-                throw new InjectorException("cannot initialize new instance of " + clazz, exception0);
+                throw new InjectorException("Cannot initialize new instance of " + clazz, exception0);
             }
             try {
                 instance = (T) allocateInstance(clazz);
             } catch (Exception exception) {
-                throw new InjectorException("cannot (unsafe) initialize new instance of " + clazz, exception);
+                throw new InjectorException("Cannot (unsafe) initialize new instance of " + clazz, exception);
             }
         }
         return instance;

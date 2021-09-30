@@ -4,6 +4,7 @@ import eu.okaeri.injector.Injectable;
 import eu.okaeri.injector.Injector;
 import eu.okaeri.injector.OkaeriInjector;
 import eu.okaeri.injectortest.element.Api;
+import eu.okaeri.injectortest.element.App;
 import eu.okaeri.injectortest.element.Worker;
 import eu.okaeri.injectortest.element.Worker2;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,16 @@ public final class TestInjector {
         assertEquals(true, injectable.isPresent());
         assertEquals(string1, injectable.get().getObject());
         assertEquals(1, injector.allOf(String.class).size());
+    }
+
+    @Test
+    public void test_constructor() {
+
+        String name = "some app";
+        Injector injector = OkaeriInjector.create().registerInjectable("name", name);
+
+        App app = injector.createInstance(App.class);
+        assertEquals(name, app.getName());
     }
 }
 
