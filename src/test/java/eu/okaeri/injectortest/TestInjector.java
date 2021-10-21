@@ -70,7 +70,7 @@ public final class TestInjector {
                 .registerInjectable("test1", string1)
                 .registerInjectable("test1", string2);
 
-        Optional<? extends Injectable<String>> injectable = injector.getExact("test1", String.class);
+        Optional<? extends Injectable<String>> injectable = injector.getInjectableExact("test1", String.class);
         assertEquals(true, injectable.isPresent());
         assertEquals(string2, injectable.get().getObject());
     }
@@ -86,7 +86,7 @@ public final class TestInjector {
                 .registerInjectable("test1", string2)
                 .registerExclusive("test1", string1);
 
-        Optional<? extends Injectable<String>> injectable = injector.getExact("test1", String.class);
+        Optional<? extends Injectable<String>> injectable = injector.getInjectableExact("test1", String.class);
         assertEquals(true, injectable.isPresent());
         assertEquals(string1, injectable.get().getObject());
         assertEquals(1, injector.allOf(String.class).size());
