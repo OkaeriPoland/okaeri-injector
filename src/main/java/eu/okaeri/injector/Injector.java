@@ -46,19 +46,36 @@ public interface Injector {
     @SuppressWarnings("unchecked")
     default <T> Optional<? extends Injectable<T>> getInjectable(@NonNull String name, @NonNull Class<T> type) {
 
-        Injectable<T> value = this.getExact(name, type).orElse(null);
+        Injectable<T> value = this.getInjectableExact(name, type).orElse(null);
 
         // no value and not searching for type only
         if ((value == null) && !"".equals(name)) {
             // search for type only
-            return this.getExact("", type);
+            return this.getInjectableExact("", type);
         }
 
         // just return
         return Optional.ofNullable(value);
     }
 
-    <T> Optional<? extends Injectable<T>> getExact(@NonNull String name, @NonNull Class<T> type);
+    @SuppressWarnings("unchecked")
+    default <T> Optional<T> get(@NonNull String name, @NonNull Class<T> type) {
+        return this.getInjectable(name, type).map(Injectable::getObject);
+    }
+
+    default <T> T getOrThrow(@NonNull String name, @NonNull Class<T> type) {
+        return this.get(name, type).orElseThrow(() -> new InjectorException("no injectable for " + name + " of type " + type));
+    }
+
+    <T> Optional<? extends Injectable<T>> getInjectableExact(@NonNull String name, @NonNull Class<T> type);
+
+    default <T> Optional<T> getExact(@NonNull String name, @NonNull Class<T> type) {
+        return this.getInjectableExact(name, type).map(Injectable::getObject);
+    }
+
+    default <T> T getExactOrThrow(@NonNull String name, @NonNull Class<T> type) {
+        return this.getExact(name, type).orElseThrow(() -> new InjectorException("no exact injectable for " + name + " of type " + type));
+    }
 
     <T> T createInstance(@NonNull Class<T> clazz) throws InjectorException;
 

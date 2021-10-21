@@ -27,7 +27,7 @@ public class OkaeriInjector implements Injector {
         return create(new CopyOnWriteArrayList<>(), unsafe);
     }
 
-    public static OkaeriInjector create(List<Injectable> injectables, boolean unsafe) {
+    public static OkaeriInjector create(@NonNull List<Injectable> injectables, boolean unsafe) {
         return new OkaeriInjector(injectables, unsafe);
     }
 
@@ -60,7 +60,7 @@ public class OkaeriInjector implements Injector {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> Optional<? extends Injectable<T>> getExact(@NonNull String name, @NonNull Class<T> type) {
+    public <T> Optional<? extends Injectable<T>> getInjectableExact(@NonNull String name, @NonNull Class<T> type) {
         Injectable<T> value = this.injectables.stream()
                 .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
                 .filter(injectable -> type.isAssignableFrom(injectable.getType()))
@@ -137,7 +137,7 @@ public class OkaeriInjector implements Injector {
                 name = field.getName();
                 injectableOptional = this.getInjectable(name, field.getType());
             } else {
-                injectableOptional = this.getExact(name, field.getType());
+                injectableOptional = this.getInjectableExact(name, field.getType());
             }
 
             if (!injectableOptional.isPresent()) {
