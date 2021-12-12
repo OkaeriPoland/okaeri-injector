@@ -20,7 +20,7 @@ public final class TestInjector {
 
         Api api = new Api("test-api");
         Injector injector = OkaeriInjector.create()
-                .registerInjectable(api);
+            .registerInjectable(api);
 
         Worker worker = injector.createInstance(Worker.class);
         assertEquals(api, worker.getApi());
@@ -34,8 +34,8 @@ public final class TestInjector {
         Api api2 = new Api("test-api2");
 
         Injector injector = OkaeriInjector.create()
-                .registerInjectable("api", api)
-                .registerInjectable("api2", api2);
+            .registerInjectable("api", api)
+            .registerInjectable("api2", api2);
 
         Worker worker = injector.createInstance(Worker.class);
         assertEquals(api, worker.getApi());
@@ -52,8 +52,8 @@ public final class TestInjector {
         Api api2 = new Api("api");
 
         Injector injector = OkaeriInjector.create()
-                .registerInjectable("api-abc", api)
-                .registerInjectable("api", api2);
+            .registerInjectable("api-abc", api)
+            .registerInjectable("api", api2);
 
         Worker worker = injector.createInstance(Worker.class);
         assertEquals(api2, worker.getApi());
@@ -67,8 +67,8 @@ public final class TestInjector {
         String string2 = "new value";
 
         Injector injector = OkaeriInjector.create()
-                .registerInjectable("test1", string1)
-                .registerInjectable("test1", string2);
+            .registerInjectable("test1", string1)
+            .registerInjectable("test1", string2);
 
         Optional<? extends Injectable<String>> injectable = injector.getInjectableExact("test1", String.class);
         assertEquals(true, injectable.isPresent());
@@ -82,9 +82,9 @@ public final class TestInjector {
         String string2 = "new value";
 
         Injector injector = OkaeriInjector.create()
-                .registerInjectable("test1", string1)
-                .registerInjectable("test1", string2)
-                .registerExclusive("test1", string1);
+            .registerInjectable("test1", string1)
+            .registerInjectable("test1", string2)
+            .registerExclusive("test1", string1);
 
         Optional<? extends Injectable<String>> injectable = injector.getInjectableExact("test1", String.class);
         assertEquals(true, injectable.isPresent());
@@ -102,4 +102,3 @@ public final class TestInjector {
         assertEquals(name, app.getName());
     }
 }
-
