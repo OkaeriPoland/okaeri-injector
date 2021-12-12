@@ -31,6 +31,33 @@ public class OkaeriInjector implements Injector {
         return new OkaeriInjector(injectables, unsafe);
     }
 
+    private static Object allocateInstance(@NonNull Class<?> clazz) throws Exception {
+        Class<?> unsafeClazz = Class.forName("sun.misc.Unsafe");
+        Field theUnsafeField = unsafeClazz.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object unsafeInstance = theUnsafeField.get(null);
+        Method allocateInstance = unsafeClazz.getDeclaredMethod("allocateInstance", Class.class);
+        return allocateInstance.invoke(unsafeInstance, clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T tryCreateInstance(@NonNull Class<T> clazz, boolean unsafe) {
+        T instance;
+        try {
+            instance = clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException exception0) {
+            if (!unsafe) {
+                throw new InjectorException("Cannot initialize new instance of " + clazz, exception0);
+            }
+            try {
+                instance = (T) allocateInstance(clazz);
+            } catch (Exception exception) {
+                throw new InjectorException("Cannot (unsafe) initialize new instance of " + clazz, exception);
+            }
+        }
+        return instance;
+    }
+
     @Override
     public List<Injectable> all() {
         return Collections.unmodifiableList(this.injectables);
@@ -207,32 +234,5 @@ public class OkaeriInjector implements Injector {
         }
 
         return call;
-    }
-
-    private static Object allocateInstance(@NonNull Class<?> clazz) throws Exception {
-        Class<?> unsafeClazz = Class.forName("sun.misc.Unsafe");
-        Field theUnsafeField = unsafeClazz.getDeclaredField("theUnsafe");
-        theUnsafeField.setAccessible(true);
-        Object unsafeInstance = theUnsafeField.get(null);
-        Method allocateInstance = unsafeClazz.getDeclaredMethod("allocateInstance", Class.class);
-        return allocateInstance.invoke(unsafeInstance, clazz);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T tryCreateInstance(@NonNull Class<T> clazz, boolean unsafe) {
-        T instance;
-        try {
-            instance = clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException exception0) {
-            if (!unsafe) {
-                throw new InjectorException("Cannot initialize new instance of " + clazz, exception0);
-            }
-            try {
-                instance = (T) allocateInstance(clazz);
-            } catch (Exception exception) {
-                throw new InjectorException("Cannot (unsafe) initialize new instance of " + clazz, exception);
-            }
-        }
-        return instance;
     }
 }
