@@ -46,8 +46,8 @@ public class OkaeriInjector implements Injector {
     public <T> List<Injectable<T>> allOf(@NonNull Class<T> type) {
         List<Injectable<T>> data = new ArrayList<>();
         List found = this.injectables.stream()
-                .filter(injectable -> type.isAssignableFrom(injectable.getType()))
-                .collect(Collectors.toList());
+            .filter(injectable -> type.isAssignableFrom(injectable.getType()))
+            .collect(Collectors.toList());
         data.addAll(found);
         return Collections.unmodifiableList(data);
     }
@@ -62,10 +62,10 @@ public class OkaeriInjector implements Injector {
     @SuppressWarnings("unchecked")
     public <T> Optional<? extends Injectable<T>> getInjectableExact(@NonNull String name, @NonNull Class<T> type) {
         Injectable<T> value = this.injectables.stream()
-                .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
-                .filter(injectable -> type.isAssignableFrom(injectable.getType()))
-                .findAny()
-                .orElse(null);
+            .filter(injectable -> name.isEmpty() || name.equals(injectable.getName()))
+            .filter(injectable -> type.isAssignableFrom(injectable.getType()))
+            .findAny()
+            .orElse(null);
         return Optional.ofNullable(value);
     }
 
@@ -75,8 +75,8 @@ public class OkaeriInjector implements Injector {
 
         // try constructor inject
         List<Constructor<?>> injectableConstructors = Arrays.stream(clazz.getConstructors())
-                .filter(constructor -> constructor.getAnnotation(Inject.class) != null)
-                .collect(Collectors.toList());
+            .filter(constructor -> constructor.getAnnotation(Inject.class) != null)
+            .collect(Collectors.toList());
 
         T instance;
         if (injectableConstructors.isEmpty()) {
@@ -102,18 +102,18 @@ public class OkaeriInjector implements Injector {
     @Override
     public <T> T invokePostConstructs(@NonNull T instance) throws InjectorException {
         Arrays.stream(instance.getClass().getDeclaredMethods())
-                .filter(method -> method.getAnnotation(PostConstruct.class) != null)
-                .sorted(Comparator.comparingInt(method -> method.getAnnotation(PostConstruct.class).order()))
-                .forEach(method -> {
-                    try {
-                        Object result = this.invoke(instance, method);
-                        if (result != null) {
-                            this.registerInjectable(method.getName(), result);
-                        }
-                    } catch (InjectorException exception) {
-                        throw new InjectorException("Failed to invoke @PostConstruct for instance of " + instance.getClass(), exception);
+            .filter(method -> method.getAnnotation(PostConstruct.class) != null)
+            .sorted(Comparator.comparingInt(method -> method.getAnnotation(PostConstruct.class).order()))
+            .forEach(method -> {
+                try {
+                    Object result = this.invoke(instance, method);
+                    if (result != null) {
+                        this.registerInjectable(method.getName(), result);
                     }
-                });
+                } catch (InjectorException exception) {
+                    throw new InjectorException("Failed to invoke @PostConstruct for instance of " + instance.getClass(), exception);
+                }
+            });
         return instance;
     }
 
