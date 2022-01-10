@@ -32,12 +32,26 @@ public interface Injector {
         return this.registerInjectable(name, object, objectClazz);
     }
 
+    /**
+     * Registers injectable.
+     * <p>
+     * Eliminates all other injectables with the same name and being same type, supertype or subtype.
+     */
     @SuppressWarnings("unchecked")
     default <T> Injector registerExclusive(@NonNull String name, @NonNull T object) throws InjectorException {
-        Class<T> objectClazz = (Class<T>) object.getClass();
-        return this.registerExclusive(name, object, objectClazz);
+        Class<T> type = (Class<T>) object.getClass();
+        this.removeIf(injectable -> name.equals(injectable.getName()) && (type.isAssignableFrom(injectable.getType()) || injectable.getType().isAssignableFrom(type)));
+        return this.registerInjectable(name, object, type);
     }
 
+    /**
+     * Registers injectable.
+     * <p>
+     * Eliminates all other injectables with the same name and being same type or subtype of {@code type}.
+     * <p>
+     * Warning: to remove supertypes (e.g. injectables registered with interface type) use {@link #registerExclusive(String, Object)}
+     * or manually remove them with {@link #removeIf(Predicate)} before invoking this method.
+     */
     default <T> Injector registerExclusive(@NonNull String name, @NonNull T object, @NonNull Class<T> type) throws InjectorException {
         this.removeIf(injectable -> name.equals(injectable.getName()) && type.isAssignableFrom(injectable.getType()));
         return this.registerInjectable(name, object, type);
