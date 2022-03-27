@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class OkaeriInjector implements Injector {
@@ -64,6 +65,11 @@ public class OkaeriInjector implements Injector {
     }
 
     @Override
+    public Stream<Injectable> stream() {
+        return this.all().stream();
+    }
+
+    @Override
     public void removeIf(@NonNull Predicate<Injectable> filter) {
         this.injectables.removeIf(filter);
     }
@@ -77,6 +83,19 @@ public class OkaeriInjector implements Injector {
             .collect(Collectors.toList());
         data.addAll(found);
         return Collections.unmodifiableList(data);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> Stream<Injectable<T>> streamInjectableOf(@NonNull Class<T> type) {
+        return this.injectables.stream()
+            .filter(injectable -> type.isAssignableFrom(injectable.getType()))
+            .map(injectable -> (Injectable<T>) injectable);
+    }
+
+    @Override
+    public <T> Stream<T> streamOf(@NonNull Class<T> type) {
+        return this.streamInjectableOf(type).map(Injectable::getObject);
     }
 
     @Override

@@ -6,7 +6,7 @@
 ![Contributors](https://img.shields.io/github/contributors/OkaeriPoland/okaeri-injector)
 [![Discord](https://img.shields.io/discord/589089838200913930)](https://discord.gg/hASN5eX)
 
-Probably the most basic and simplest DI possible with just ~13kB in size. Part of the [okaeri-platform](https://github.com/OkaeriPoland/okaeri-platform).
+Probably the most basic and simplest DI possible with just ~15kB in size. Part of the [okaeri-platform](https://github.com/OkaeriPoland/okaeri-platform).
 
 ## Installation
 
@@ -27,7 +27,7 @@ Add dependency to the `dependencies` section:
 <dependency>
   <groupId>eu.okaeri</groupId>
   <artifactId>okaeri-injector</artifactId>
-  <version>2.0.1</version>
+  <version>2.1.0</version>
 </dependency>
 ```
 
@@ -42,7 +42,7 @@ maven { url "https://storehouse.okaeri.eu/repository/maven-public/" }
 Add dependency to the `maven` section:
 
 ```groovy
-implementation 'eu.okaeri:okaeri-injector:2.0.1'
+implementation 'eu.okaeri:okaeri-injector:2.1.0'
 ```
 
 ## Example
