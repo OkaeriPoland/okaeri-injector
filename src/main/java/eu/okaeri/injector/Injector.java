@@ -9,6 +9,7 @@ import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public interface Injector {
 
@@ -16,9 +17,15 @@ public interface Injector {
 
     List<Injectable> all();
 
+    Stream<Injectable> stream();
+
     void removeIf(@NonNull Predicate<Injectable> predicate);
 
     <T> List<Injectable<T>> allOf(@NonNull Class<T> type);
+
+    <T> Stream<Injectable<T>> streamInjectableOf(@NonNull Class<T> type);
+
+    <T> Stream<T> streamOf(@NonNull Class<T> type);
 
     @SuppressWarnings("unchecked")
     default <T> Injector registerInjectable(@NonNull T object) throws InjectorException {
